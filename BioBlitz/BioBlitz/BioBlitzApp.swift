@@ -13,5 +13,6 @@ struct BioBlitzApp: App {
         WindowGroup {
             ContentView()
         }
+        .windowStyle(.hiddenTitleBar)
     }
 }
