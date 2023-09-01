@@ -10,6 +10,10 @@ struct BacteriaView: View {
                 return "chevron.up.square.fill"
         case .green:
                 return "chevron.up.circle.fill"
+        case .yellow:
+                return "chevron.up.square.fill"
+        case .blue:
+                return "chevron.up.circle.fill"
         default:
             return "chevron.up.circle"
         }

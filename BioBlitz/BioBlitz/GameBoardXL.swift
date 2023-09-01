@@ -1,18 +1,22 @@
 import SwiftUI
 
-class GameBoard: ObservableObject{
-    let rowCount = 10
-    let columnCount = 20
+class GameBoardXL: ObservableObject{
+    let rowCount = 12
+    let columnCount = 24
     
     @Published var grid = [[Bacteria]]()
     
     @Published var currentPlayer = Color.green
     @Published var greenScore = 1
     @Published var redScore = 1
+    @Published var yellowScore = 1
+    @Published var blueScore = 1
     
     @Published var winner: String? = nil
     
     private var bacteriaBeingInfected = 0
+    @Published var maxRounds = 7
+    @Published var currentRound = 1
     
     init(){
         reset()
@@ -23,6 +27,9 @@ class GameBoard: ObservableObject{
         currentPlayer = .green
         redScore = 1
         greenScore = 1
+        yellowScore = 1
+        blueScore = 1
+        currentRound = 0
         
         grid.removeAll()
         
@@ -32,16 +39,28 @@ class GameBoard: ObservableObject{
             for col in 0..<columnCount{
                 let bacteria = Bacteria(row: row, col: col)
                 
-                if row <= rowCount / 2{
+                if row <= rowCount / 2 {
+                    
                     if row == 0 && col == 0{
                         bacteria.direction = .north //top left
                     }
-                    //make sure nothings points towards the player
+                    
+                    else if row == 0 && col == columnCount - 1 {
+                        bacteria.direction = .east //top right
+                    }
+                    
+                    //make sure nothings points towards the players
                     else if row == 0 && col == 1{
                         bacteria.direction = .east
-                    }else if row == 1 && col == 0{
+                    }else if row == 0 && col == columnCount - 2{
+                        bacteria.direction = .west
+                    }
+                    else if row == 1 && col == 0{
                         bacteria.direction = .south
-                    }else{
+                    }else if row == 1 && col == columnCount - 1{
+                        bacteria.direction = .south
+                    }
+                    else{
                         bacteria.direction = Bacteria.Direction.allCases.randomElement()!
                     }
                 }
@@ -60,6 +79,8 @@ class GameBoard: ObservableObject{
         
         grid[0][0].color = .green
         grid[rowCount - 1][columnCount - 1].color = .red
+        grid[0][columnCount - 1].color = .yellow
+        grid[rowCount - 1][0].color = .blue
     }
     
     
@@ -126,7 +147,6 @@ class GameBoard: ObservableObject{
                 }
             }
         }
-        
         updateScore()
     }
     
@@ -134,6 +154,7 @@ class GameBoard: ObservableObject{
         guard bacteria.color == currentPlayer else { return }
         guard bacteriaBeingInfected == 0 else { return }
         guard winner == nil else { return }
+        //guard currentRound <= maxRounds else { return }
         
         objectWillChange.send()
         
@@ -143,16 +164,44 @@ class GameBoard: ObservableObject{
     }
     
     func changePlayer() {
-        if currentPlayer == .green {
-            currentPlayer = .red
-        }else{
-            currentPlayer = .green
+        
+        repeat {
+            if(currentRound <= maxRounds){
+                if currentPlayer == .green {
+                    if(currentRound <= maxRounds){
+                        currentPlayer = .yellow
+                    }else {updateScore()}
+                } else if currentPlayer == .yellow {
+                    if(currentRound <= maxRounds){
+                        currentPlayer = .blue
+                    }else {updateScore()}
+                } else if currentPlayer == .blue {
+                    if(currentRound <= maxRounds){
+                        currentPlayer = .red
+                    }else {updateScore()}
+                } else if currentPlayer == .red{
+                    currentRound += 1
+                    if(currentRound <= maxRounds){
+                        currentPlayer = .green
+                    }else {updateScore()}
+                }
+            }else { updateScore() }
         }
+        while currentPlayer == .yellow && yellowScore == 0 ||
+                currentPlayer == .green && greenScore == 0 ||
+                currentPlayer == .blue && blueScore == 0 ||
+                currentPlayer == .red && redScore == 0
+                
     }
+    
     
     func updateScore(){
         var newRedScore = 0
         var newGreenScore = 0
+        var newYellowScore = 0
+        var newBlueScore = 0
+        var nonZeroScores = [Color]()
+        
         
         for row in grid{
             for bacteria in row{
@@ -160,23 +209,54 @@ class GameBoard: ObservableObject{
                     newRedScore += 1
                 }else if bacteria.color == .green{
                     newGreenScore += 1
+                }else if bacteria.color == .yellow{
+                    newYellowScore += 1
+                }else if bacteria.color == .blue{
+                    newBlueScore += 1
                 }
             }
         }
         
         redScore = newRedScore
         greenScore = newGreenScore
+        yellowScore = newYellowScore
+        blueScore = newBlueScore
+        
+        if redScore > 0 {
+            nonZeroScores.append(.red)
+        }
+        if greenScore > 0 {
+            nonZeroScores.append(.green)
+        }
+        if yellowScore > 0 {
+            nonZeroScores.append(.yellow)
+        }
+        if blueScore > 0 {
+            nonZeroScores.append(.blue)
+        }
         
         if bacteriaBeingInfected == 0{
-            withAnimation(.spring()){
-                if redScore == 0{
-                    winner = "GREEN"
-                }else if greenScore == 0 {
-                    winner = "RED"
-                }else {
-                    changePlayer()
+            if nonZeroScores.count == 1{
+                // Only one player has points, end the game
+                winner = "\(nonZeroScores[0])"
+            } else if currentRound > maxRounds {
+                // Game ended due to rounds and no single winner
+                withAnimation(.spring()) {
+                    if redScore > greenScore && redScore > blueScore && redScore > yellowScore {
+                        winner = "RED"
+                    } else if greenScore > redScore && greenScore > blueScore && greenScore > yellowScore {
+                        winner = "GREEN"
+                    } else if blueScore > greenScore && blueScore > redScore && blueScore > yellowScore {
+                        winner = "BLUE"
+                    } else if yellowScore > greenScore && yellowScore > blueScore && yellowScore > redScore {
+                        winner = "YELLOW"
+                    } else {winner = "NOBODY"}
                 }
+            } else {
+                changePlayer()
             }
         }
+        
+        
     }
 }
