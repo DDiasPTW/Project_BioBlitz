@@ -1,8 +1,9 @@
 import SwiftUI
+import Combine
 
 class GameBoard: ObservableObject{
-    let rowCount = 10
-    let columnCount = 20
+    let rowCount = 13
+    let columnCount = 26
     
     @Published var grid = [[Bacteria]]()
     
@@ -13,16 +14,27 @@ class GameBoard: ObservableObject{
     @Published var winner: String? = nil
     
     private var bacteriaBeingInfected = 0
+    @Published var maxRounds = 20
+    @Published var currentRound = 1
+    
+    @Published var playerTimerProgress: Double = 1.0
+    @Published var playerTimer = 3.0
+    @Published var currentPlayerTimer: AnyCancellable?
+    
     
     init(){
         reset()
+        startPlayerTimer()
     }
     
     func reset(){
         winner = nil
+        //currentPlayerTimer?.cancel()
+        self.playerTimerProgress = 1.0
         currentPlayer = .green
         redScore = 1
         greenScore = 1
+        currentRound = 1
         
         grid.removeAll()
         
@@ -32,16 +44,28 @@ class GameBoard: ObservableObject{
             for col in 0..<columnCount{
                 let bacteria = Bacteria(row: row, col: col)
                 
-                if row <= rowCount / 2{
+                if row <= rowCount / 2 {
+                    
                     if row == 0 && col == 0{
                         bacteria.direction = .north //top left
                     }
-                    //make sure nothings points towards the player
+                    
+                    else if row == 0 && col == columnCount - 1 {
+                        bacteria.direction = .east //top right
+                    }
+                    
+                    //make sure nothings points towards the players
                     else if row == 0 && col == 1{
                         bacteria.direction = .east
-                    }else if row == 1 && col == 0{
+                    }else if row == 0 && col == columnCount - 2{
+                        bacteria.direction = .west
+                    }
+                    else if row == 1 && col == 0{
                         bacteria.direction = .south
-                    }else{
+                    }else if row == 1 && col == columnCount - 1{
+                        bacteria.direction = .south
+                    }
+                    else{
                         bacteria.direction = Bacteria.Direction.allCases.randomElement()!
                     }
                 }
@@ -62,6 +86,17 @@ class GameBoard: ObservableObject{
         grid[rowCount - 1][columnCount - 1].color = .red
     }
     
+    func startPlayerTimer() {
+        currentPlayerTimer = Timer.publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { _ in
+                self.playerTimerProgress -= 1.0 / self.playerTimer
+                if self.playerTimerProgress <= 0 && self.bacteriaBeingInfected == 0{
+                    self.playerTimerProgress = 1.0
+                    self.changePlayer()
+                }
+            }
+    }
     
     func getBacteria(atRow row: Int, col: Int) -> Bacteria? {
         guard row >= 0 else {return nil}
@@ -126,7 +161,6 @@ class GameBoard: ObservableObject{
                 }
             }
         }
-        
         updateScore()
     }
     
@@ -142,17 +176,34 @@ class GameBoard: ObservableObject{
         infect(from: bacteria)
     }
     
+    
+    
     func changePlayer() {
-        if currentPlayer == .green {
-            currentPlayer = .red
-        }else{
-            currentPlayer = .green
+        // Stop the timer for the current player
+        currentPlayerTimer?.cancel()
+        self.playerTimerProgress = 1.0
+        
+        if(currentRound <= maxRounds){
+            if currentPlayer == .green {
+                if(currentRound <= maxRounds){
+                    currentPlayer = .red
+                }else { updateScore() }
+            }else{
+                currentRound += 1
+                if(currentRound <= maxRounds){
+                    currentPlayer = .green
+                }else { updateScore() }
+            }
         }
+        
+        // Start a new timer for the current player
+        startPlayerTimer()
     }
     
     func updateScore(){
         var newRedScore = 0
         var newGreenScore = 0
+        var nonZeroScores = [Color]()
         
         for row in grid{
             for bacteria in row{
@@ -167,15 +218,29 @@ class GameBoard: ObservableObject{
         redScore = newRedScore
         greenScore = newGreenScore
         
+        if redScore > 0 {
+            nonZeroScores.append(.red)
+        }
+        if greenScore > 0 {
+            nonZeroScores.append(.green)
+        }
+        
         if bacteriaBeingInfected == 0{
-            withAnimation(.spring()){
-                if redScore == 0{
-                    winner = "GREEN"
-                }else if greenScore == 0 {
-                    winner = "RED"
-                }else {
-                    changePlayer()
+            if nonZeroScores.count == 1{
+                // Only one player has points, end the game
+                winner = "\(nonZeroScores[0])"
+            } else if currentRound > maxRounds {
+                // Game ended due to rounds and no single winner
+                withAnimation(.spring()) {
+                    if redScore > greenScore {
+                        winner = "RED"
+                    } else if greenScore > redScore {
+                        winner = "GREEN"
+                    }
+                    else {winner = "NOBODY"}
                 }
+            } else {
+                changePlayer()
             }
         }
     }

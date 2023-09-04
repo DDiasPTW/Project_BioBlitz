@@ -1,8 +1,9 @@
 import SwiftUI
+import Combine
 
 class GameBoardXL: ObservableObject{
-    let rowCount = 12
-    let columnCount = 24
+    let rowCount = 15
+    let columnCount = 30
     
     @Published var grid = [[Bacteria]]()
     
@@ -15,21 +16,29 @@ class GameBoardXL: ObservableObject{
     @Published var winner: String? = nil
     
     private var bacteriaBeingInfected = 0
-    @Published var maxRounds = 7
+    @Published var maxRounds = 30
     @Published var currentRound = 1
+    
+    @Published var playerTimerProgress: Double = 1.0
+    @Published var playerTimer = 5.0
+    @Published var currentPlayerTimer: AnyCancellable?
+    
     
     init(){
         reset()
+        startPlayerTimer()
     }
     
     func reset(){
         winner = nil
+        //currentPlayerTimer?.cancel()
+        self.playerTimerProgress = 1.0
         currentPlayer = .green
         redScore = 1
         greenScore = 1
         yellowScore = 1
         blueScore = 1
-        currentRound = 0
+        currentRound = 1
         
         grid.removeAll()
         
@@ -82,6 +91,19 @@ class GameBoardXL: ObservableObject{
         grid[0][columnCount - 1].color = .yellow
         grid[rowCount - 1][0].color = .blue
     }
+    
+    func startPlayerTimer() {
+        currentPlayerTimer = Timer.publish(every: 1.0, on: .main, in: .common)
+            .autoconnect()
+            .sink { _ in
+                self.playerTimerProgress -= 1.0 / self.playerTimer
+                if self.playerTimerProgress <= 0 && self.bacteriaBeingInfected == 0{
+                    self.playerTimerProgress = 1.0
+                    self.changePlayer()
+                }
+            }
+    }
+    
     
     
     func getBacteria(atRow row: Int, col: Int) -> Bacteria? {
@@ -154,7 +176,6 @@ class GameBoardXL: ObservableObject{
         guard bacteria.color == currentPlayer else { return }
         guard bacteriaBeingInfected == 0 else { return }
         guard winner == nil else { return }
-        //guard currentRound <= maxRounds else { return }
         
         objectWillChange.send()
         
@@ -163,7 +184,12 @@ class GameBoardXL: ObservableObject{
         infect(from: bacteria)
     }
     
+    
+    
     func changePlayer() {
+        // Stop the timer for the current player
+        currentPlayerTimer?.cancel()
+        self.playerTimerProgress = 1.0
         
         repeat {
             if(currentRound <= maxRounds){
@@ -187,13 +213,14 @@ class GameBoardXL: ObservableObject{
                 }
             }else { updateScore() }
         }
-        while currentPlayer == .yellow && yellowScore == 0 ||
+        while (currentPlayer == .yellow && yellowScore == 0 ||
                 currentPlayer == .green && greenScore == 0 ||
                 currentPlayer == .blue && blueScore == 0 ||
-                currentPlayer == .red && redScore == 0
+                currentPlayer == .red && redScore == 0)
                 
+        // Start a new timer for the current player
+        startPlayerTimer()
     }
-    
     
     func updateScore(){
         var newRedScore = 0
@@ -256,7 +283,5 @@ class GameBoardXL: ObservableObject{
                 changePlayer()
             }
         }
-        
-        
     }
 }
