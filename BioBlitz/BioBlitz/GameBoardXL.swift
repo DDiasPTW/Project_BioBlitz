@@ -17,10 +17,10 @@ class GameBoardXL: ObservableObject{
     
     private var bacteriaBeingInfected = 0
     @Published var maxRounds = 30
-    @Published var currentRound = 1
+    @Published var currentRound = 0
     
     @Published var playerTimerProgress: Double = 1.0
-    @Published var playerTimer = 5.0
+    @Published var playerTimer = 4.0
     @Published var currentPlayerTimer: AnyCancellable?
     
     
@@ -38,7 +38,7 @@ class GameBoardXL: ObservableObject{
         greenScore = 1
         yellowScore = 1
         blueScore = 1
-        currentRound = 1
+        currentRound = 0
         
         grid.removeAll()
         
@@ -192,22 +192,22 @@ class GameBoardXL: ObservableObject{
         self.playerTimerProgress = 1.0
         
         repeat {
-            if(currentRound <= maxRounds){
+            if(currentRound < maxRounds){
                 if currentPlayer == .green {
-                    if(currentRound <= maxRounds){
+                    if(currentRound < maxRounds){
                         currentPlayer = .yellow
                     }else {updateScore()}
                 } else if currentPlayer == .yellow {
-                    if(currentRound <= maxRounds){
+                    if(currentRound < maxRounds){
                         currentPlayer = .blue
                     }else {updateScore()}
                 } else if currentPlayer == .blue {
-                    if(currentRound <= maxRounds){
+                    if(currentRound < maxRounds){
                         currentPlayer = .red
                     }else {updateScore()}
                 } else if currentPlayer == .red{
                     currentRound += 1
-                    if(currentRound <= maxRounds){
+                    if(currentRound < maxRounds){
                         currentPlayer = .green
                     }else {updateScore()}
                 }
@@ -266,7 +266,7 @@ class GameBoardXL: ObservableObject{
             if nonZeroScores.count == 1{
                 // Only one player has points, end the game
                 winner = "\(nonZeroScores[0])"
-            } else if currentRound > maxRounds {
+            } else if currentRound == maxRounds {
                 // Game ended due to rounds and no single winner
                 withAnimation(.spring()) {
                     if redScore > greenScore && redScore > blueScore && redScore > yellowScore {

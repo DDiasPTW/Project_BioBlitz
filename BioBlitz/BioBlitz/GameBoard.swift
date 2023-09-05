@@ -14,11 +14,12 @@ class GameBoard: ObservableObject{
     @Published var winner: String? = nil
     
     private var bacteriaBeingInfected = 0
-    @Published var maxRounds = 20
-    @Published var currentRound = 1
+    
+    @Published var maxRounds = 15
+    @Published var currentRound = 0
     
     @Published var playerTimerProgress: Double = 1.0
-    @Published var playerTimer = 3.0
+    @Published var playerTimer = 4.0
     @Published var currentPlayerTimer: AnyCancellable?
     
     
@@ -34,7 +35,7 @@ class GameBoard: ObservableObject{
         currentPlayer = .green
         redScore = 1
         greenScore = 1
-        currentRound = 1
+        currentRound = 0
         
         grid.removeAll()
         
@@ -87,6 +88,8 @@ class GameBoard: ObservableObject{
     }
     
     func startPlayerTimer() {
+        guard winner == nil else { return }
+        
         currentPlayerTimer = Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { _ in
@@ -183,14 +186,14 @@ class GameBoard: ObservableObject{
         currentPlayerTimer?.cancel()
         self.playerTimerProgress = 1.0
         
-        if(currentRound <= maxRounds){
+        if(currentRound < maxRounds){
             if currentPlayer == .green {
-                if(currentRound <= maxRounds){
+                if(currentRound < maxRounds){
                     currentPlayer = .red
                 }else { updateScore() }
             }else{
                 currentRound += 1
-                if(currentRound <= maxRounds){
+                if(currentRound < maxRounds){
                     currentPlayer = .green
                 }else { updateScore() }
             }
@@ -229,7 +232,7 @@ class GameBoard: ObservableObject{
             if nonZeroScores.count == 1{
                 // Only one player has points, end the game
                 winner = "\(nonZeroScores[0])"
-            } else if currentRound > maxRounds {
+            } else if currentRound == maxRounds {
                 // Game ended due to rounds and no single winner
                 withAnimation(.spring()) {
                     if redScore > greenScore {
