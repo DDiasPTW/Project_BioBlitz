@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FourPlayerView: View {
-    @ObservedObject var boardXL: GameBoardXL
+    @StateObject var boardXL: GameBoardXL
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {

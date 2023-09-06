@@ -2,26 +2,27 @@ import SwiftUI
 import Combine
 
 class GameBoard: ObservableObject{
-    let rowCount = 13
-    let columnCount = 26
     
+    //Board size
+    let rowCount = 11
+    let columnCount = 22
     @Published var grid = [[Bacteria]]()
     
+    //Scores
     @Published var currentPlayer = Color.green
     @Published var greenScore = 1
     @Published var redScore = 1
-    
+    private var bacteriaBeingInfected = 0
     @Published var winner: String? = nil
     
-    private var bacteriaBeingInfected = 0
-    
+    //Rounds
     @Published var maxRounds = 15
     @Published var currentRound = 0
     
+    //Timers
     @Published var playerTimerProgress: Double = 1.0
     @Published var playerTimer = 4.0
     @Published var currentPlayerTimer: AnyCancellable?
-    
     
     init(){
         reset()
@@ -156,6 +157,7 @@ class GameBoard: ObservableObject{
                 bacteria.color = from.color
                 bacteriaBeingInfected += 1
                 
+                AudioManager.shared.playInfectionSound()
                 
                 Task { @MainActor in
                     try await Task.sleep(for: .milliseconds(5))
@@ -178,8 +180,6 @@ class GameBoard: ObservableObject{
         
         infect(from: bacteria)
     }
-    
-    
     
     func changePlayer() {
         // Stop the timer for the current player

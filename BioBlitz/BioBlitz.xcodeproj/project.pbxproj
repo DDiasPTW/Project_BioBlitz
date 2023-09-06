@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CF1E48012AA7A64500B782EB /* 683587__yehawsnail__bubble-pop.wav in Resources */ = {isa = PBXBuildFile; fileRef = CF1E48002AA7A64500B782EB /* 683587__yehawsnail__bubble-pop.wav */; };
+		CF1E48032AA881C700B782EB /* AudioManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF1E48022AA881C700B782EB /* AudioManager.swift */; };
 		CF7BA6AE2AA0770E004561F0 /* BioBlitzApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7BA6AD2AA0770E004561F0 /* BioBlitzApp.swift */; };
 		CF7BA6B02AA0770E004561F0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7BA6AF2AA0770E004561F0 /* ContentView.swift */; };
 		CF7BA6B22AA07710004561F0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CF7BA6B12AA07710004561F0 /* Assets.xcassets */; };
@@ -20,6 +22,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CF1E48002AA7A64500B782EB /* 683587__yehawsnail__bubble-pop.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "683587__yehawsnail__bubble-pop.wav"; sourceTree = "<group>"; };
+		CF1E48022AA881C700B782EB /* AudioManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioManager.swift; sourceTree = "<group>"; };
 		CF7BA6AA2AA0770E004561F0 /* BioBlitz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BioBlitz.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF7BA6AD2AA0770E004561F0 /* BioBlitzApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioBlitzApp.swift; sourceTree = "<group>"; };
 		CF7BA6AF2AA0770E004561F0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -48,7 +52,6 @@
 		CF7BA6A12AA0770E004561F0 = {
 			isa = PBXGroup;
 			children = (
-				CFE2AF312AA71CF300BACAA7 /* FourPlayerView.swift */,
 				CF7BA6AC2AA0770E004561F0 /* BioBlitz */,
 				CF7BA6AB2AA0770E004561F0 /* Products */,
 			);
@@ -65,15 +68,18 @@
 		CF7BA6AC2AA0770E004561F0 /* BioBlitz */ = {
 			isa = PBXGroup;
 			children = (
+				CFE2AF312AA71CF300BACAA7 /* FourPlayerView.swift */,
 				CF7BA6AD2AA0770E004561F0 /* BioBlitzApp.swift */,
 				CF7BA6AF2AA0770E004561F0 /* ContentView.swift */,
 				CFE2AF2F2AA71C6D00BACAA7 /* TwoPlayerView.swift */,
 				CF7BA6C02AA07CB6004561F0 /* GameBoard.swift */,
+				CF1E48022AA881C700B782EB /* AudioManager.swift */,
 				CFCBB7E22AA2241E00EA92D9 /* GameBoardXL.swift */,
 				CF7BA6BC2AA078CA004561F0 /* Bacteria.swift */,
 				CF7BA6BE2AA07A6E004561F0 /* BacteriaView.swift */,
 				CF7BA6B12AA07710004561F0 /* Assets.xcassets */,
 				CF7BA6B62AA07710004561F0 /* BioBlitz.entitlements */,
+				CF1E48002AA7A64500B782EB /* 683587__yehawsnail__bubble-pop.wav */,
 				CF7BA6B32AA07710004561F0 /* Preview Content */,
 			);
 			path = BioBlitz;
@@ -145,6 +151,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CF1E48012AA7A64500B782EB /* 683587__yehawsnail__bubble-pop.wav in Resources */,
 				CF7BA6B52AA07710004561F0 /* Preview Assets.xcassets in Resources */,
 				CF7BA6B22AA07710004561F0 /* Assets.xcassets in Resources */,
 			);
@@ -163,6 +170,7 @@
 				CFE2AF322AA71CF300BACAA7 /* FourPlayerView.swift in Sources */,
 				CF7BA6BD2AA078CA004561F0 /* Bacteria.swift in Sources */,
 				CFCBB7E32AA2241E00EA92D9 /* GameBoardXL.swift in Sources */,
+				CF1E48032AA881C700B782EB /* AudioManager.swift in Sources */,
 				CFE2AF302AA71C6D00BACAA7 /* TwoPlayerView.swift in Sources */,
 				CF7BA6BF2AA07A6E004561F0 /* BacteriaView.swift in Sources */,
 			);

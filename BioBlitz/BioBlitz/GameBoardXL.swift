@@ -2,23 +2,26 @@ import SwiftUI
 import Combine
 
 class GameBoardXL: ObservableObject{
+    
+    //Board size
     let rowCount = 15
     let columnCount = 30
-    
     @Published var grid = [[Bacteria]]()
     
+    //Scores
     @Published var currentPlayer = Color.green
     @Published var greenScore = 1
     @Published var redScore = 1
     @Published var yellowScore = 1
     @Published var blueScore = 1
-    
     @Published var winner: String? = nil
-    
     private var bacteriaBeingInfected = 0
+    
+    //Rounds
     @Published var maxRounds = 30
     @Published var currentRound = 0
     
+    //Timers
     @Published var playerTimerProgress: Double = 1.0
     @Published var playerTimer = 4.0
     @Published var currentPlayerTimer: AnyCancellable?
@@ -161,6 +164,7 @@ class GameBoardXL: ObservableObject{
                 bacteria.color = from.color
                 bacteriaBeingInfected += 1
                 
+                AudioManager.shared.playInfectionSound()
                 
                 Task { @MainActor in
                     try await Task.sleep(for: .milliseconds(5))

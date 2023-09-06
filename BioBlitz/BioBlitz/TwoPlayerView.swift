@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TwoPlayerView: View {
-    @ObservedObject var board: GameBoard
+    @StateObject var board: GameBoard
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
