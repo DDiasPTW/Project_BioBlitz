@@ -17,7 +17,7 @@ struct ContentView: View {
                 
                 Button(action: {
                     isTwoPlayersSelected = true
-                    board.reset()
+                    board.start()
                 }) {
                     Text("2 PLAYERS")
                         .padding()
@@ -31,7 +31,7 @@ struct ContentView: View {
                 
                 Button(action: {
                     isFourPlayersSelected = true
-                    boardXL.reset()
+                    boardXL.start()
                 }) {
                     Text("4 PLAYERS")
                         .padding()

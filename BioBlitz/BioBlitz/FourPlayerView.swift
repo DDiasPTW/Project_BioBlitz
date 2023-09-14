@@ -34,9 +34,11 @@ struct FourPlayerView: View {
                 Spacer()
                 
                 VStack{
-                    Text("BIOBLITZ")
+                    Text("BIOBLITZ | \(boardXL.howManyRounds)")
                         .font(.system(size: 36).weight(.black))
                     Text("\(boardXL.currentRound) / \(boardXL.maxRounds)")
+                        .padding(.horizontal)
+                        .background(Capsule().fill(.orange).opacity(boardXL.canAttack == true ? 1 : 0))
                 }.padding(.horizontal)
                 
                 Spacer()
@@ -91,7 +93,7 @@ struct FourPlayerView: View {
                             .foregroundColor(.white)
                             .fontWeight(.black)
                         
-                        Button(action: boardXL.reset){
+                        Button(action: boardXL.start){
                             Text("Play again")
                                 .foregroundColor(.black)
                                 .fontWeight(.black)

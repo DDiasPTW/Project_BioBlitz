@@ -26,13 +26,19 @@ class GameBoardXL: ObservableObject{
     @Published var playerTimer = 4.0
     @Published var currentPlayerTimer: AnyCancellable?
     
+    //Attack phase
+    @Published var canAttack = false
+    private var roundsUntilAttack = 3
+    @Published var howManyAttackRounds = 3
+    @Published var howManyRounds = 0
+    
     
     init(){
-        reset()
+        start()
         startPlayerTimer()
     }
     
-    func reset(){
+    func start(){
         winner = nil
         //currentPlayerTimer?.cancel()
         self.playerTimerProgress = 1.0
@@ -42,9 +48,12 @@ class GameBoardXL: ObservableObject{
         yellowScore = 1
         blueScore = 1
         currentRound = 0
-        
+        howManyRounds = roundsUntilAttack
+        canAttack = false
         grid.removeAll()
         
+        
+        //!TO DO: ADD "BOMB" POWER-UP | ADD "LINE" POWER-UP
         for row in 0..<rowCount{
             var newRow = [Bacteria]()
             
@@ -107,8 +116,6 @@ class GameBoardXL: ObservableObject{
             }
     }
     
-    
-    
     func getBacteria(atRow row: Int, col: Int) -> Bacteria? {
         guard row >= 0 else {return nil}
         guard row < grid.count else {return nil}
@@ -160,18 +167,26 @@ class GameBoardXL: ObservableObject{
         }
         
         for case let bacteria? in bacteriaToInfect{
-            if bacteria.color != from.color{
-                bacteria.color = from.color
-                bacteriaBeingInfected += 1
-                
-                AudioManager.shared.playInfectionSound()
-                
-                Task { @MainActor in
-                    try await Task.sleep(for: .milliseconds(5))
-                    bacteriaBeingInfected -= 1
-                    infect(from: bacteria)
+            if (from.color != .gray && bacteria.color == .gray) ||
+                (from.color == .green && bacteria.color != .gray && canAttack) ||
+                (from.color == .red && bacteria.color != .gray && canAttack ||
+                 from.color == .blue && bacteria.color != .gray && canAttack) ||
+                (from.color == .yellow && bacteria.color != .gray && canAttack)
+            {
+                if bacteria.color != from.color{
+                    bacteria.color = from.color
+                    bacteriaBeingInfected += 1
+                    
+                    AudioManager.shared.playInfectionSound()
+                    
+                    Task { @MainActor in
+                        try await Task.sleep(for: .milliseconds(5))
+                        bacteriaBeingInfected -= 1
+                        infect(from: bacteria)
+                    }
                 }
             }
+            
         }
         updateScore()
     }
@@ -187,9 +202,7 @@ class GameBoardXL: ObservableObject{
         
         infect(from: bacteria)
     }
-    
-    
-    
+
     func changePlayer() {
         // Stop the timer for the current player
         currentPlayerTimer?.cancel()
@@ -211,8 +224,13 @@ class GameBoardXL: ObservableObject{
                     }else {updateScore()}
                 } else if currentPlayer == .red{
                     currentRound += 1
+                    howManyRounds -= 1
                     if(currentRound < maxRounds){
                         currentPlayer = .green
+                        if howManyRounds < -howManyAttackRounds{
+                            howManyRounds = roundsUntilAttack
+                            canAttack = false
+                        }else if howManyRounds < 0 && roundsUntilAttack >= -roundsUntilAttack{ canAttack = true }
                     }else {updateScore()}
                 }
             }else { updateScore() }

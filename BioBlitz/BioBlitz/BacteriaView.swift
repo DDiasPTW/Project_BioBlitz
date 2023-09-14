@@ -6,14 +6,18 @@ struct BacteriaView: View {
     
     var image: String {
         switch bacteria.color{
-        case .red:
-                return "chevron.up.circle.fill"
         case .green:
-                return "chevron.up.circle.fill"
+            return "chevron.up.circle.fill" //player 1
+        case .red:
+                return "chevron.up.circle.fill" //player 2/4
         case .yellow:
-                return "chevron.up.square.fill"
+                return "chevron.up.square.fill" //player 2
         case .blue:
-                return "chevron.up.square.fill"
+                return "chevron.up.square.fill" //player 3
+        case .orange:
+            return "plus.circle" //bomb power-up
+        case .purple:
+            return "minus.circle" //line power-up
         default:
             return "chevron.up.circle"
         }

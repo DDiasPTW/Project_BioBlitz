@@ -23,6 +23,8 @@ struct TwoPlayerView: View {
                     Text("BIOBLITZ")
                         .font(.system(size: 36).weight(.black))
                     Text("\(board.currentRound) / \(board.maxRounds)")
+                        .padding(.horizontal)
+                        .background(Capsule().fill(.orange).opacity(board.canAttack == true ? 1 : 0))
                 }.padding(.horizontal)
                 
                 Spacer()
@@ -61,7 +63,7 @@ struct TwoPlayerView: View {
                             .foregroundColor(.white)
                             .fontWeight(.black)
                         
-                        Button(action: board.reset){
+                        Button(action: board.start){
                             Text("Play again")
                                 .foregroundColor(.black)
                                 .fontWeight(.black)
