@@ -2,6 +2,8 @@ import SwiftUI
 import Combine
 
 class GameBoardXL: ObservableObject{
+    //.green -> player 1, .red -> player 4 , .yellow -> player 2, .blue -> player 3, .orange -> bomb power-up, .purple crossPower-up
+    
     
     //Board size
     let rowCount = 15
@@ -23,7 +25,7 @@ class GameBoardXL: ObservableObject{
     
     //Timers
     @Published var playerTimerProgress: Double = 1.0
-    @Published var playerTimer = 4.0
+    @Published var playerTimer = 7.0
     @Published var currentPlayerTimer: AnyCancellable?
     
     //Attack phase
@@ -98,10 +100,16 @@ class GameBoardXL: ObservableObject{
             grid.append(newRow)
         }
         
+        //Cross power-up -> decide where in the board it stays
+        let randomRow = Int.random(in: 5..<rowCount)
+        let randomCol = Int.random(in: 5..<columnCount)
+        
+        //place players and power ups
         grid[0][0].color = .green
         grid[rowCount - 1][columnCount - 1].color = .red
         grid[0][columnCount - 1].color = .yellow
         grid[rowCount - 1][0].color = .blue
+        grid[randomRow][randomCol].color = .purple //cross power-up
     }
     
     func startPlayerTimer() {
@@ -167,7 +175,28 @@ class GameBoardXL: ObservableObject{
         }
         
         for case let bacteria? in bacteriaToInfect{
-            if (from.color != .gray && bacteria.color == .gray) ||
+            if (from.color != .gray && bacteria.color == .purple) //cross power up
+            {
+                for row in grid {
+                    for otherBacteria in row {
+                        if otherBacteria.row == bacteria.row || otherBacteria.col == bacteria.col {
+                            if otherBacteria.color != from.color {
+                                otherBacteria.color = from.color
+                                bacteriaBeingInfected += 1
+                                
+                                AudioManager.shared.playInfectionSound()
+                                
+                                Task { @MainActor in
+                                    try await Task.sleep(for: .milliseconds(5))
+                                    bacteriaBeingInfected -= 1
+                                    infect(from: otherBacteria)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (from.color != .gray && bacteria.color == .gray) ||
                 (from.color == .green && bacteria.color != .gray && canAttack) ||
                 (from.color == .red && bacteria.color != .gray && canAttack ||
                  from.color == .blue && bacteria.color != .gray && canAttack) ||

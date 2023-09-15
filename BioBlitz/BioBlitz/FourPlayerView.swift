@@ -34,7 +34,7 @@ struct FourPlayerView: View {
                 Spacer()
                 
                 VStack{
-                    Text("BIOBLITZ | \(boardXL.howManyRounds)")
+                    Text("BIOBLITZ")
                         .font(.system(size: 36).weight(.black))
                     Text("\(boardXL.currentRound) / \(boardXL.maxRounds)")
                         .padding(.horizontal)
