@@ -15,7 +15,7 @@ struct BacteriaView: View {
         case .blue:
                 return "chevron.up.square.fill" //player 3
         case .orange:
-            return "minus.circle" //bomb power-up
+            return "circle.hexagongrid.circle.fill" //bomb power-up
         case .purple:
             return "plus.circle.fill" //cross power-up
         default:

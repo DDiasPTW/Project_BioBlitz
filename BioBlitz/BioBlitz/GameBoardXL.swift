@@ -34,6 +34,9 @@ class GameBoardXL: ObservableObject{
     @Published var howManyAttackRounds = 3
     @Published var howManyRounds = 0
     
+    //Power-ups
+    private var bombRadius = 2 //.orange
+    
     
     init(){
         start()
@@ -53,9 +56,10 @@ class GameBoardXL: ObservableObject{
         howManyRounds = roundsUntilAttack
         canAttack = false
         grid.removeAll()
-        
-        
-        //!TO DO: ADD "BOMB" POWER-UP | ADD "LINE" POWER-UP
+        generateGrid()
+    }
+    
+    func generateGrid(){
         for row in 0..<rowCount{
             var newRow = [Bacteria]()
             
@@ -100,16 +104,29 @@ class GameBoardXL: ObservableObject{
             grid.append(newRow)
         }
         
-        //Cross power-up -> decide where in the board it stays
-        let randomRow = Int.random(in: 5..<rowCount)
-        let randomCol = Int.random(in: 5..<columnCount)
+        // Cross power-up -> decide where it stays in the board
+        var randomRowCross: Int
+        var randomColCross: Int
+        
+        // Bomb power-up
+        var randomRowBomb: Int
+        var randomColBomb: Int
+        
+        repeat {
+            randomRowCross = Int.random(in: 3..<rowCount)
+            randomColCross = Int.random(in: 3..<columnCount)
+            
+            randomRowBomb = Int.random(in: 3..<rowCount)
+            randomColBomb = Int.random(in: 3..<columnCount)
+        } while randomRowCross == randomRowBomb && randomColCross == randomColBomb
         
         //place players and power ups
         grid[0][0].color = .green
         grid[rowCount - 1][columnCount - 1].color = .red
         grid[0][columnCount - 1].color = .yellow
         grid[rowCount - 1][0].color = .blue
-        grid[randomRow][randomCol].color = .purple //cross power-up
+        grid[randomRowCross][randomColCross].color = .purple //cross power-up
+        grid[randomRowBomb][randomColBomb].color = .orange //bomb power-up
     }
     
     func startPlayerTimer() {
@@ -180,6 +197,34 @@ class GameBoardXL: ObservableObject{
                 for row in grid {
                     for otherBacteria in row {
                         if otherBacteria.row == bacteria.row || otherBacteria.col == bacteria.col {
+                            if otherBacteria.color != from.color {
+                                otherBacteria.color = from.color
+                                bacteriaBeingInfected += 1
+                                
+                                AudioManager.shared.playInfectionSound()
+                                
+                                Task { @MainActor in
+                                    try await Task.sleep(for: .milliseconds(5))
+                                    bacteriaBeingInfected -= 1
+                                    infect(from: otherBacteria)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (from.color != .gray && bacteria.color == .orange) // Bomb power up
+            {
+                for row in grid.indices {
+                    for col in grid[row].indices {
+                        let otherBacteria = grid[row][col]
+                        
+                        // Calculate the distance between the bomb and the other bacteria
+                        let rowDistance = abs(otherBacteria.row - bacteria.row)
+                        let colDistance = abs(otherBacteria.col - bacteria.col)
+                        
+                        // Check if the bacteria is within the specified radius
+                        if rowDistance <= bombRadius && colDistance <= bombRadius {
                             if otherBacteria.color != from.color {
                                 otherBacteria.color = from.color
                                 bacteriaBeingInfected += 1
