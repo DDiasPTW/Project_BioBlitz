@@ -20,7 +20,7 @@ class GameBoardXL: ObservableObject{
     private var bacteriaBeingInfected = 0
     
     //Rounds
-    @Published var maxRounds = 30
+    @Published var maxRounds = 40
     @Published var currentRound = 0
     
     //Timers
@@ -31,11 +31,14 @@ class GameBoardXL: ObservableObject{
     //Attack phase
     @Published var canAttack = false
     private var roundsUntilAttack = 3
-    @Published var howManyAttackRounds = 3
+    @Published var howManyAttackRounds = 4
     @Published var howManyRounds = 0
     
     //Power-ups
-    private var bombRadius = 2 //.orange
+    private let bombRadius = 2 //.orange
+    
+    private let rowsToInfect = 5 // Number of rows to affect above and below -> .purple
+    private let colsToInfect = 5 // Number of columns to affect to the left and right -> .purple
     
     
     init(){
@@ -107,6 +110,8 @@ class GameBoardXL: ObservableObject{
         // Cross power-up -> decide where it stays in the board
         var randomRowCross: Int
         var randomColCross: Int
+        var randomRowCross2: Int
+        var randomColCross2: Int
         
         // Bomb power-up
         var randomRowBomb: Int
@@ -116,9 +121,13 @@ class GameBoardXL: ObservableObject{
             randomRowCross = Int.random(in: 3..<rowCount)
             randomColCross = Int.random(in: 3..<columnCount)
             
+            randomRowCross2 = Int.random(in: 3..<rowCount)
+            randomColCross2 = Int.random(in: 3..<columnCount)
+            
             randomRowBomb = Int.random(in: 3..<rowCount)
             randomColBomb = Int.random(in: 3..<columnCount)
-        } while randomRowCross == randomRowBomb && randomColCross == randomColBomb
+        } while randomRowCross == randomRowBomb && randomColCross == randomColBomb && randomRowCross == randomRowCross2 &&
+        randomColCross == randomColCross2 && randomRowBomb == randomRowCross2 && randomColBomb == randomColCross2
         
         //place players and power ups
         grid[0][0].color = .green
@@ -126,6 +135,7 @@ class GameBoardXL: ObservableObject{
         grid[0][columnCount - 1].color = .yellow
         grid[rowCount - 1][0].color = .blue
         grid[randomRowCross][randomColCross].color = .purple //cross power-up
+        grid[randomRowCross2][randomColCross2].color = .purple //cross power-up
         grid[randomRowBomb][randomColBomb].color = .orange //bomb power-up
     }
     
@@ -192,22 +202,49 @@ class GameBoardXL: ObservableObject{
         }
         
         for case let bacteria? in bacteriaToInfect{
-            if (from.color != .gray && bacteria.color == .purple) //cross power up
+            if (from.color != .gray && bacteria.color == .purple) // Cross power up
             {
-                for row in grid {
-                    for otherBacteria in row {
-                        if otherBacteria.row == bacteria.row || otherBacteria.col == bacteria.col {
-                            if otherBacteria.color != from.color {
-                                otherBacteria.color = from.color
-                                bacteriaBeingInfected += 1
-                                
-                                AudioManager.shared.playInfectionSound()
-                                
-                                Task { @MainActor in
-                                    try await Task.sleep(for: .milliseconds(5))
-                                    bacteriaBeingInfected -= 1
-                                    infect(from: otherBacteria)
-                                }
+                // Do not change the color of the purple bacteria so that other players can use the power-up as well
+                
+                // Infect bacteria in the same row
+                for col in max(0, bacteria.col - colsToInfect)..<min(columnCount, bacteria.col + colsToInfect + 1) {
+                    if col != bacteria.col {
+                        let otherBacteria = grid[bacteria.row][col]
+                        
+                        if otherBacteria.color != from.color {
+                            otherBacteria.color = from.color
+                            bacteriaBeingInfected += 1
+                            
+                            AudioManager.shared.playInfectionSound()
+                            
+                            bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
+                            
+                            Task { @MainActor in
+                                try await Task.sleep(for: .milliseconds(5))
+                                bacteriaBeingInfected -= 1
+                                infect(from: otherBacteria)
+                            }
+                        }
+                    }
+                }
+                
+                // Infect bacteria in the same column
+                for row in max(0, bacteria.row - rowsToInfect)..<min(rowCount, bacteria.row + rowsToInfect + 1) {
+                    if row != bacteria.row {
+                        let otherBacteria = grid[row][bacteria.col]
+                        
+                        if otherBacteria.color != from.color {
+                            otherBacteria.color = from.color
+                            bacteriaBeingInfected += 1
+                            
+                            AudioManager.shared.playInfectionSound()
+                            
+                            bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
+                            
+                            Task { @MainActor in
+                                try await Task.sleep(for: .milliseconds(5))
+                                bacteriaBeingInfected -= 1
+                                infect(from: otherBacteria)
                             }
                         }
                     }
@@ -225,11 +262,13 @@ class GameBoardXL: ObservableObject{
                         
                         // Check if the bacteria is within the specified radius
                         if rowDistance <= bombRadius && colDistance <= bombRadius {
-                            if otherBacteria.color != from.color {
+                            if otherBacteria.color != from.color{
                                 otherBacteria.color = from.color
                                 bacteriaBeingInfected += 1
                                 
                                 AudioManager.shared.playInfectionSound()
+                                
+                                bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
                                 
                                 Task { @MainActor in
                                     try await Task.sleep(for: .milliseconds(5))
@@ -242,10 +281,10 @@ class GameBoardXL: ObservableObject{
                 }
             }
             else if (from.color != .gray && bacteria.color == .gray) ||
-                (from.color == .green && bacteria.color != .gray && canAttack) ||
-                (from.color == .red && bacteria.color != .gray && canAttack ||
-                 from.color == .blue && bacteria.color != .gray && canAttack) ||
-                (from.color == .yellow && bacteria.color != .gray && canAttack)
+                        (from.color == .green && bacteria.color != .gray && canAttack) ||
+                        (from.color == .red && bacteria.color != .gray && canAttack ||
+                         from.color == .blue && bacteria.color != .gray && canAttack) ||
+                        (from.color == .yellow && bacteria.color != .gray && canAttack)
             {
                 if bacteria.color != from.color{
                     bacteria.color = from.color
@@ -276,7 +315,7 @@ class GameBoardXL: ObservableObject{
         
         infect(from: bacteria)
     }
-
+    
     func changePlayer() {
         // Stop the timer for the current player
         currentPlayerTimer?.cancel()
@@ -310,12 +349,12 @@ class GameBoardXL: ObservableObject{
             }else { updateScore() }
         }
         while (currentPlayer == .yellow && yellowScore == 0 ||
-                currentPlayer == .green && greenScore == 0 ||
-                currentPlayer == .blue && blueScore == 0 ||
-                currentPlayer == .red && redScore == 0)
+               currentPlayer == .green && greenScore == 0 ||
+               currentPlayer == .blue && blueScore == 0 ||
+               currentPlayer == .red && redScore == 0)
                 
-        // Start a new timer for the current player
-        startPlayerTimer()
+                // Start a new timer for the current player
+                startPlayerTimer()
     }
     
     func updateScore(){

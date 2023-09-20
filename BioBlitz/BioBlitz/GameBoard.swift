@@ -34,6 +34,9 @@ class GameBoard: ObservableObject{
     //Power-ups
     private var bombRadius = 2 //.orange
     
+    private let rowsToInfect = 5 // Number of rows to affect above and below -> .purple
+    private let colsToInfect = 5 // Number of columns to affect to the left and right -> .purple
+    
     init(){
         start()
     }
@@ -189,27 +192,56 @@ class GameBoard: ObservableObject{
         }
         
         for case let bacteria? in bacteriaToInfect{
-            if (from.color != .gray && bacteria.color == .purple) //cross power up
+            if (from.color != .gray && bacteria.color == .purple) // Cross power up
             {
-                for row in grid {
-                    for otherBacteria in row {
-                        if otherBacteria.row == bacteria.row || otherBacteria.col == bacteria.col {
-                            if otherBacteria.color != from.color {
-                                otherBacteria.color = from.color
-                                bacteriaBeingInfected += 1
-                                
-                                AudioManager.shared.playInfectionSound()
-                                
-                                Task { @MainActor in
-                                    try await Task.sleep(for: .milliseconds(5))
-                                    bacteriaBeingInfected -= 1
-                                    infect(from: otherBacteria)
-                                }
+                // Do not change the color of the purple bacteria so that other players can use the power-up as well
+                
+                // Infect bacteria in the same row
+                for col in max(0, bacteria.col - colsToInfect)..<min(columnCount, bacteria.col + colsToInfect + 1) {
+                    if col != bacteria.col {
+                        let otherBacteria = grid[bacteria.row][col]
+                        
+                        if otherBacteria.color != from.color {
+                            otherBacteria.color = from.color
+                            bacteriaBeingInfected += 1
+                            
+                            AudioManager.shared.playInfectionSound()
+                            
+                            bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
+                            
+                            Task { @MainActor in
+                                try await Task.sleep(for: .milliseconds(5))
+                                bacteriaBeingInfected -= 1
+                                infect(from: otherBacteria)
+                            }
+                        }
+                    }
+                }
+                
+                // Infect bacteria in the same column
+                for row in max(0, bacteria.row - rowsToInfect)..<min(rowCount, bacteria.row + rowsToInfect + 1) {
+                    if row != bacteria.row {
+                        let otherBacteria = grid[row][bacteria.col]
+                        
+                        if otherBacteria.color != from.color {
+                            otherBacteria.color = from.color
+                            bacteriaBeingInfected += 1
+                            
+                            AudioManager.shared.playInfectionSound()
+                            
+                            bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
+                            
+                            Task { @MainActor in
+                                try await Task.sleep(for: .milliseconds(5))
+                                bacteriaBeingInfected -= 1
+                                infect(from: otherBacteria)
                             }
                         }
                     }
                 }
             }
+
+
             else if (from.color != .gray && bacteria.color == .orange) // Bomb power up
             {
                 for row in grid.indices {
@@ -222,11 +254,13 @@ class GameBoard: ObservableObject{
                         
                         // Check if the bacteria is within the specified radius
                         if rowDistance <= bombRadius && colDistance <= bombRadius {
-                            if otherBacteria.color != from.color {
+                            if otherBacteria.color != from.color{
                                 otherBacteria.color = from.color
                                 bacteriaBeingInfected += 1
                                 
                                 AudioManager.shared.playInfectionSound()
+                                
+                                bacteriaToInfect.append(otherBacteria) // Append to the list of bacteria to infect
                                 
                                 Task { @MainActor in
                                     try await Task.sleep(for: .milliseconds(5))
@@ -238,7 +272,7 @@ class GameBoard: ObservableObject{
                     }
                 }
             }
-            
+
             else if (from.color != .gray && bacteria.color == .gray) ||
                         (from.color == .green && bacteria.color != .gray && canAttack) ||
                         (from.color == .red && bacteria.color != .gray && canAttack )
